@@ -13,76 +13,158 @@ import 'leaflet/dist/leaflet.css';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import type { Icon } from 'leaflet';
-// import * as L from 'leaflet';
-
-// Leaflet import and setup inside useEffect
-// let L: {
-//   icon: typeof Icon;
-// } | null = null;
+import * as L from 'leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 
 // Define marker icons
-let potholeIcon: Icon | null = null;
-let wrongLaneIcon: Icon | null = null;
-let wrongParkingIcon: Icon | null = null;
+let potholeIcon: L.Icon | null = null;
+let wrongLaneIcon: L.Icon | null = null;
+let wrongParkingIcon: L.Icon | null = null;
+
+// Main Home component
+export default function Home() {
+  const [selectedDateRange, setSelectedDateRange] = React.useState<undefined | {
+    from: Date;
+    to: Date;
+  }>({
+    from: new Date('2024-07-22'),
+    to: new Date('2024-07-23'),
+  });
+  const [potholeIncidents, setPotholeIncidents] = useState([]);
+  const [wrongLaneDetections, setWrongLaneDetections] = useState([]);
+  const [wrongParkingIncidents, setWrongParkingIncidents] = useState([]);
+
+  useEffect(() => {
+    async function fetchData() {
+      if (selectedDateRange?.from && selectedDateRange?.to) {
+        const fromDate = selectedDateRange.from.toISOString().split('T')[0];
+        const toDate = selectedDateRange.to.toISOString().split('T')[0];
+
+        const potholeData = await getPotholeIncidents(fromDate, toDate);
+        setPotholeIncidents(potholeData);
+
+        const wrongLaneData = await getWrongLaneDetections(fromDate, toDate);
+        setWrongLaneDetections(wrongLaneData);
+
+        const wrongParkingData = await getWrongParkingIncidents(fromDate, toDate);
+        setWrongParkingIncidents(wrongParkingData);
+      }
+    }
+    fetchData();
+  }, [selectedDateRange]);
+
+  const totalPotholes = potholeIncidents?.length || 0;
+  const totalWrongLane = wrongLaneDetections?.length || 0;
+  const totalWrongParking = wrongParkingIncidents?.length || 0;
+
+  useEffect(() => {
+    // Dynamically create icons
+    potholeIcon = new L.Icon({
+      iconUrl: '/pothole_marker.svg',
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -32],
+    });
+
+    wrongLaneIcon = new L.Icon({
+      iconUrl: '/wrong_lane_marker.svg',
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -32],
+    });
+
+    wrongParkingIcon = new L.Icon({
+      iconUrl: '/wrong_parking_marker.svg',
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -32],
+    });
+    // Update map markers when incidents change
+  }, []);
+  return (
+    <SidebarProvider>
+      <div className="md:flex h-screen w-full">
+        <Sidebar className="w-64 flex-none bg-gray-100">
+          <SidebarHeader>
+            <h2 className="text-lg font-semibold">Pune Road Insights</h2>
+          </SidebarHeader>
+          <SidebarSeparator />
+          <SidebarContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton>Dashboard</SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+            <SidebarSeparator />
+             <Card>
+                <CardHeader>
+                  <CardTitle>Select Date Range</CardTitle>
+                  <CardDescription>Filter data by date</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4">
+                  <Calendar
+                    mode="range"
+                    defaultMonth={new Date()}
+                    selected={selectedDateRange}
+                    onSelect={setSelectedDateRange}
+                  />
+                </CardContent>
+              </Card>
+          </SidebarContent>
+        </Sidebar>
+
+        <div className="flex-1">
+          <div className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Total Potholes</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{totalPotholes}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Wrong Lane Detections</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{totalWrongLane}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Wrong Parking Challans</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{totalWrongParking}</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            
+              <LeafletMap
+                potholeIncidents={potholeIncidents}
+                wrongLaneDetections={wrongLaneDetections}
+                wrongParkingIncidents={wrongParkingIncidents}
+                selectedDateRange={selectedDateRange}
+              />
+          </div>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
+}
 
 // Leaflet Map component
 function LeafletMap({ potholeIncidents, wrongLaneDetections, wrongParkingIncidents, selectedDateRange }) {
   const [mapCenter, setMapCenter] = useState([18.5204, 73.8567]); // Pune coordinates
   const [mapZoom, setMapZoom] = useState(13);
   const [incidentDetails, setIncidentDetails] = useState(null);
-  const [L, setL] = useState<any>(null);
-  const [MapContainer, setMapContainer] = useState<any>(null);
-  const [TileLayer, setTileLayer] = useState<any>(null);
-  const [Marker, setMarker] = useState<any>(null);
-  const [Popup, setPopup] = useState<any>(null);
-
-  useEffect(() => {
-    // let L: any = null;
-     // Dynamically import leaflet and create icons
-     import('leaflet').then((leaflet) => {
-        setL(leaflet);
-
-        if (leaflet) {
-          potholeIcon = new leaflet.icon({
-            iconUrl: '/pothole_marker.svg',
-            iconSize: [32, 32],
-            iconAnchor: [16, 32],
-            popupAnchor: [0, -32],
-          });
-
-          wrongLaneIcon = new leaflet.icon({
-            iconUrl: '/wrong_lane_marker.svg',
-            iconSize: [32, 32],
-            iconAnchor: [16, 32],
-            popupAnchor: [0, -32],
-          });
-
-          wrongParkingIcon = new leaflet.icon({
-            iconUrl: '/wrong_parking_marker.svg',
-            iconSize: [32, 32],
-            iconAnchor: [16, 32],
-            popupAnchor: [0, -32],
-          });
-        }
-      });
-
-      import('react-leaflet').then((reactLeaflet) => {
-        setMapContainer(reactLeaflet.MapContainer);
-        setTileLayer(reactLeaflet.TileLayer);
-        setMarker(reactLeaflet.Marker);
-        setPopup(reactLeaflet.Popup);
-      });
-    // });
-    // Update map markers when incidents change
-  }, []);
 
   const handleMarkerClick = (incident) => {
     setIncidentDetails(incident);
   };
-
-  if (!MapContainer || !TileLayer || !Marker || !Popup) {
-    return <p>Loading map...</p>;
-  }
 
   return (
     <MapContainer
@@ -191,113 +273,3 @@ const IncidentDetailsModal = ({ incident, onClose }) => {
     </div>
   );
 };
-
-// Main Home component
-export default function Home() {
-  const [selectedDateRange, setSelectedDateRange] = React.useState<undefined | {
-    from: Date;
-    to: Date;
-  }>({
-    from: new Date('2024-07-22'),
-    to: new Date('2024-07-23'),
-  });
-  const [potholeIncidents, setPotholeIncidents] = useState([]);
-  const [wrongLaneDetections, setWrongLaneDetections] = useState([]);
-  const [wrongParkingIncidents, setWrongParkingIncidents] = useState([]);
-
-  useEffect(() => {
-    async function fetchData() {
-      if (selectedDateRange?.from && selectedDateRange?.to) {
-        const fromDate = selectedDateRange.from.toISOString().split('T')[0];
-        const toDate = selectedDateRange.to.toISOString().split('T')[0];
-
-        const potholeData = await getPotholeIncidents(fromDate, toDate);
-        setPotholeIncidents(potholeData);
-
-        const wrongLaneData = await getWrongLaneDetections(fromDate, toDate);
-        setWrongLaneDetections(wrongLaneData);
-
-        const wrongParkingData = await getWrongParkingIncidents(fromDate, toDate);
-        setWrongParkingIncidents(wrongParkingData);
-      }
-    }
-    fetchData();
-  }, [selectedDateRange]);
-
-  const totalPotholes = potholeIncidents?.length || 0;
-  const totalWrongLane = wrongLaneDetections?.length || 0;
-  const totalWrongParking = wrongParkingIncidents?.length || 0;
-
-  return (
-    <SidebarProvider>
-      <div className="md:flex h-screen w-full">
-        <Sidebar className="w-64 flex-none bg-gray-100">
-          <SidebarHeader>
-            <h2 className="text-lg font-semibold">Pune Road Insights</h2>
-          </SidebarHeader>
-          <SidebarSeparator />
-          <SidebarContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton>Dashboard</SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-            <SidebarSeparator />
-             <Card>
-                <CardHeader>
-                  <CardTitle>Select Date Range</CardTitle>
-                  <CardDescription>Filter data by date</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4">
-                  <Calendar
-                    mode="range"
-                    defaultMonth={new Date()}
-                    selected={selectedDateRange}
-                    onSelect={setSelectedDateRange}
-                  />
-                </CardContent>
-              </Card>
-          </SidebarContent>
-        </Sidebar>
-
-        <div className="flex-1">
-          <div className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Total Potholes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{totalPotholes}</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Wrong Lane Detections</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{totalWrongLane}</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Wrong Parking Challans</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{totalWrongParking}</div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <LeafletMap
-              potholeIncidents={potholeIncidents}
-              wrongLaneDetections={wrongLaneDetections}
-              wrongParkingIncidents={wrongParkingIncidents}
-              selectedDateRange={selectedDateRange}
-            />
-          </div>
-        </div>
-      </div>
-    </SidebarProvider>
-  );
-}
