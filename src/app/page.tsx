@@ -9,11 +9,12 @@ import { getWrongLaneDetections } from '@/services/wrong-lane-detection';
 import { getWrongParkingIncidents } from '@/services/wrong-parking';
 import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import type { Icon } from 'leaflet';
+// import * as L from 'leaflet';
 
 // Leaflet import and setup inside useEffect
 // let L: {
@@ -30,36 +31,38 @@ function LeafletMap({ potholeIncidents, wrongLaneDetections, wrongParkingInciden
   const [mapCenter, setMapCenter] = useState([18.5204, 73.8567]); // Pune coordinates
   const [mapZoom, setMapZoom] = useState(13);
   const [incidentDetails, setIncidentDetails] = useState(null);
+  const [L, setL] = useState<any>(null);
 
   useEffect(() => {
-    let L: any = null;
+    // let L: any = null;
      // Dynamically import leaflet and create icons
-    import('leaflet').then((leaflet) => {
-      L = leaflet;
+     import('leaflet').then((leaflet) => {
+        setL(leaflet);
 
-      if (L) {
-        potholeIcon = new L.icon({
-          iconUrl: '/pothole_marker.svg',
-          iconSize: [32, 32],
-          iconAnchor: [16, 32],
-          popupAnchor: [0, -32],
-        });
+        if (leaflet) {
+          potholeIcon = new leaflet.icon({
+            iconUrl: '/pothole_marker.svg',
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32],
+          });
 
-        wrongLaneIcon = new L.icon({
-          iconUrl: '/wrong_lane_marker.svg',
-          iconSize: [32, 32],
-          iconAnchor: [16, 32],
-          popupAnchor: [0, -32],
-        });
+          wrongLaneIcon = new leaflet.icon({
+            iconUrl: '/wrong_lane_marker.svg',
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32],
+          });
 
-        wrongParkingIcon = new L.icon({
-          iconUrl: '/wrong_parking_marker.svg',
-          iconSize: [32, 32],
-          iconAnchor: [16, 32],
-          popupAnchor: [0, -32],
-        });
-      }
-    });
+          wrongParkingIcon = new leaflet.icon({
+            iconUrl: '/wrong_parking_marker.svg',
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32],
+          });
+        }
+      });
+    // });
     // Update map markers when incidents change
   }, []);
 
