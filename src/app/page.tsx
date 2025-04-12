@@ -9,7 +9,6 @@ import { getWrongLaneDetections } from '@/services/wrong-lane-detection';
 import { getWrongParkingIncidents } from '@/services/wrong-parking';
 import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
@@ -32,6 +31,10 @@ function LeafletMap({ potholeIncidents, wrongLaneDetections, wrongParkingInciden
   const [mapZoom, setMapZoom] = useState(13);
   const [incidentDetails, setIncidentDetails] = useState(null);
   const [L, setL] = useState<any>(null);
+  const [MapContainer, setMapContainer] = useState<any>(null);
+  const [TileLayer, setTileLayer] = useState<any>(null);
+  const [Marker, setMarker] = useState<any>(null);
+  const [Popup, setPopup] = useState<any>(null);
 
   useEffect(() => {
     // let L: any = null;
@@ -62,6 +65,13 @@ function LeafletMap({ potholeIncidents, wrongLaneDetections, wrongParkingInciden
           });
         }
       });
+
+      import('react-leaflet').then((reactLeaflet) => {
+        setMapContainer(reactLeaflet.MapContainer);
+        setTileLayer(reactLeaflet.TileLayer);
+        setMarker(reactLeaflet.Marker);
+        setPopup(reactLeaflet.Popup);
+      });
     // });
     // Update map markers when incidents change
   }, []);
@@ -69,6 +79,10 @@ function LeafletMap({ potholeIncidents, wrongLaneDetections, wrongParkingInciden
   const handleMarkerClick = (incident) => {
     setIncidentDetails(incident);
   };
+
+  if (!MapContainer || !TileLayer || !Marker || !Popup) {
+    return <p>Loading map...</p>;
+  }
 
   return (
     <MapContainer
