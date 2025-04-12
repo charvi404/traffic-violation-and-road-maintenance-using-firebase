@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarHeader, SidebarSeparator } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarHeader, SidebarSeparator } from '@/components/ui/sidebar';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getPotholeIncidents } from '@/services/pothole-detection';
@@ -14,7 +14,7 @@ import 'leaflet/dist/leaflet.css';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import type { Icon } from 'leaflet';
-import * as L from 'leaflet';
+import type { Map as LeafletMap, Icon as LeafletIcon } from 'leaflet';
 
 
 const Map = dynamic(
@@ -23,9 +23,9 @@ const Map = dynamic(
 );
 
 // Define marker icons
-let potholeIcon: L.Icon | null = null;
-let wrongLaneIcon: L.Icon | null = null;
-let wrongParkingIcon: L.Icon | null = null;
+let potholeIcon: LeafletIcon | null = null;
+let wrongLaneIcon: LeafletIcon | null = null;
+let wrongParkingIcon: LeafletIcon | null = null;
 
 // Main Home component
 export default function Home() {
@@ -42,46 +42,38 @@ export default function Home() {
   const [incidentDetails, setIncidentDetails] = useState(null);
   const [mapCenter, setMapCenter] = useState([18.5204, 73.8567]); // Pune coordinates
   const [mapZoom, setMapZoom] = useState(13);
-  // const [MapContainer, setMapContainer] = useState<any>(null);
-  // const [TileLayer, setTileLayer] = useState<any>(null);
-  // const [Marker, setMarker] = useState<any>(null);
-  // const [Popup, setPopup] = useState<any>(null);
+  const [L, setL] = useState<typeof import('leaflet') | null>(null);
 
-  // useEffect(() => {
-  //   // // Dynamically import react-leaflet and set components
-  //   // import('react-leaflet').then((reactLeaflet) => {
-  //   //   setMapContainer(() => reactLeaflet.MapContainer);
-  //   //   setTileLayer(() => reactLeaflet.TileLayer);
-  //   //   setMarker(() => reactLeaflet.Marker);
-  //   //   setPopup(() => reactLeaflet.Popup);
-  //   // });
-  // }, []);
 
 
   useEffect(() => {
-    // Create icons after L is available
-    if (typeof L !== 'undefined') {
-      potholeIcon = new L.Icon({
-        iconUrl: '/pothole_marker.svg',
-        iconSize: [32, 32],
-        iconAnchor: [16, 32],
-        popupAnchor: [0, -32],
-      });
+    // Dynamically import leaflet and create icons
+    import('leaflet').then((leaflet) => {
+      setL(leaflet);
 
-      wrongLaneIcon = new L.Icon({
-        iconUrl: '/wrong_lane_marker.svg',
-        iconSize: [32, 32],
-        iconAnchor: [16, 32],
-        popupAnchor: [0, -32],
-      });
+      if (leaflet) {
+        potholeIcon = new leaflet.Icon({
+          iconUrl: '/pothole_marker.svg',
+          iconSize: [32, 32],
+          iconAnchor: [16, 32],
+          popupAnchor: [0, -32],
+        });
 
-      wrongParkingIcon = new L.Icon({
-        iconUrl: '/wrong_parking_marker.svg',
-        iconSize: [32, 32],
-        iconAnchor: [16, 32],
-        popupAnchor: [0, -32],
-      });
-    }
+        wrongLaneIcon = new leaflet.Icon({
+          iconUrl: '/wrong_lane_marker.svg',
+          iconSize: [32, 32],
+          iconAnchor: [16, 32],
+          popupAnchor: [0, -32],
+        });
+
+        wrongParkingIcon = new leaflet.Icon({
+          iconUrl: '/wrong_parking_marker.svg',
+          iconSize: [32, 32],
+          iconAnchor: [16, 32],
+          popupAnchor: [0, -32],
+        });
+      }
+    });
   }, []);
 
   useEffect(() => {
