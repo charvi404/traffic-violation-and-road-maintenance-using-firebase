@@ -14,7 +14,8 @@ import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import type { Icon } from 'leaflet';
 import * as L from 'leaflet';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+// import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+
 
 // Define marker icons
 let potholeIcon: L.Icon | null = null;
@@ -33,6 +34,112 @@ export default function Home() {
   const [potholeIncidents, setPotholeIncidents] = useState([]);
   const [wrongLaneDetections, setWrongLaneDetections] = useState([]);
   const [wrongParkingIncidents, setWrongParkingIncidents] = useState([]);
+  const [MapContainer, setMapContainer] = useState<any>(null);
+  const [TileLayer, setTileLayer] = useState<any>(null);
+  const [Marker, setMarker] = useState<any>(null);
+  const [Popup, setPopup] = useState<any>(null);
+  const [LeafletMap, setLeafletMap] = useState<any>(() => () => null);
+
+  useEffect(() => {
+    // Dynamically import react-leaflet and set components
+    import('react-leaflet').then((reactLeaflet) => {
+      setMapContainer(() => reactLeaflet.MapContainer);
+      setTileLayer(() => reactLeaflet.TileLayer);
+      setMarker(() => reactLeaflet.Marker);
+      setPopup(() => reactLeaflet.Popup);
+
+      // Create a LeafletMap component that uses the dynamically imported components
+      const DynamicLeafletMap = ({ potholeIncidents, wrongLaneDetections, wrongParkingIncidents, selectedDateRange }) => {
+        const [mapCenter, setMapCenter] = useState([18.5204, 73.8567]); // Pune coordinates
+        const [mapZoom, setMapZoom] = useState(13);
+        const [incidentDetails, setIncidentDetails] = useState(null);
+
+        const handleMarkerClick = (incident) => {
+          setIncidentDetails(incident);
+        };
+
+        return (
+          MapContainer && TileLayer && Marker && Popup ?
+            <MapContainer
+              center={mapCenter}
+              zoom={mapZoom}
+              style={{ height: 'calc(100vh - 4rem)', width: '100%' }}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution="© OpenStreetMap contributors"
+              />
+              {potholeIncidents?.map((incident, index) => (
+                potholeIcon ? (
+                  <Marker
+                    key={`pothole-${index}`}
+                    position={[incident.location.lat, incident.location.lng]}
+                    icon={potholeIcon}
+                    eventHandlers={{
+                      click: () => handleMarkerClick(incident),
+                    }}
+                  >
+                    <Popup>
+                      Pothole Details:
+                      <br />
+                      Location: {incident.location.lat}, {incident.location.lng}
+                      <br />
+                      Timestamp: {incident.timestamp}
+                    </Popup>
+                  </Marker>) : null
+              ))}
+              {wrongLaneDetections?.map((incident, index) => (
+                wrongLaneIcon ? (
+                  <Marker
+                    key={`wronglane-${index}`}
+                    position={[incident.location.lat, incident.location.lng]}
+                    icon={wrongLaneIcon}
+                    eventHandlers={{
+                      click: () => handleMarkerClick(incident),
+                    }}
+                  >
+                    <Popup>
+                      Wrong Lane Details:
+                      <br />
+                      Location: {incident.location.lat}, {incident.location.lng}
+                      <br />
+                      Timestamp: {incident.timestamp}
+                    </Popup>
+                  </Marker>) : null
+              ))}
+              {wrongParkingIncidents?.map((incident, index) => (
+                wrongParkingIcon ? (
+                  <Marker
+                    key={`wrongparking-${index}`}
+                    position={[incident.location.lat, incident.location.lng]}
+                    icon={wrongParkingIcon}
+                    eventHandlers={{
+                      click: () => handleMarkerClick(incident),
+                    }}
+                  >
+                    <Popup>
+                      Wrong Parking Details:
+                      <br />
+                      Location: {incident.location.lat}, {incident.location.lng}
+                      <br />
+                      Timestamp: {incident.timestamp}
+                    </Popup>
+                  </Marker>) : null
+              ))}
+              {incidentDetails && (
+                <IncidentDetailsModal
+                  incident={incidentDetails}
+                  onClose={() => setIncidentDetails(null)}
+                />
+              )}
+            </MapContainer>
+            : null
+        );
+      };
+
+      setLeafletMap(() => DynamicLeafletMap);
+    });
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -157,91 +264,91 @@ export default function Home() {
 }
 
 // Leaflet Map component
-function LeafletMap({ potholeIncidents, wrongLaneDetections, wrongParkingIncidents, selectedDateRange }) {
-  const [mapCenter, setMapCenter] = useState([18.5204, 73.8567]); // Pune coordinates
-  const [mapZoom, setMapZoom] = useState(13);
-  const [incidentDetails, setIncidentDetails] = useState(null);
+// function LeafletMap({ potholeIncidents, wrongLaneDetections, wrongParkingIncidents, selectedDateRange }) {
+//   const [mapCenter, setMapCenter] = useState([18.5204, 73.8567]); // Pune coordinates
+//   const [mapZoom, setMapZoom] = useState(13);
+//   const [incidentDetails, setIncidentDetails] = useState(null);
 
-  const handleMarkerClick = (incident) => {
-    setIncidentDetails(incident);
-  };
+//   const handleMarkerClick = (incident) => {
+//     setIncidentDetails(incident);
+//   };
 
-  return (
-    <MapContainer
-      center={mapCenter}
-      zoom={mapZoom}
-      style={{ height: 'calc(100vh - 4rem)', width: '100%' }}
-    >
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution="© OpenStreetMap contributors"
-      />
-      {potholeIncidents?.map((incident, index) => (
-        potholeIcon ? (
-        <Marker
-          key={`pothole-${index}`}
-          position={[incident.location.lat, incident.location.lng]}
-          icon={potholeIcon}
-          eventHandlers={{
-            click: () => handleMarkerClick(incident),
-          }}
-        >
-          <Popup>
-            Pothole Details:
-            <br />
-            Location: {incident.location.lat}, {incident.location.lng}
-            <br />
-            Timestamp: {incident.timestamp}
-          </Popup>
-        </Marker> ) : null
-      ))}
-      {wrongLaneDetections?.map((incident, index) => (
-        wrongLaneIcon ? (
-        <Marker
-          key={`wronglane-${index}`}
-          position={[incident.location.lat, incident.location.lng]}
-          icon={wrongLaneIcon}
-          eventHandlers={{
-            click: () => handleMarkerClick(incident),
-          }}
-        >
-          <Popup>
-            Wrong Lane Details:
-            <br />
-            Location: {incident.location.lat}, {incident.location.lng}
-            <br />
-            Timestamp: {incident.timestamp}
-          </Popup>
-        </Marker> ) : null
-      ))}
-      {wrongParkingIncidents?.map((incident, index) => (
-        wrongParkingIcon ? (
-        <Marker
-          key={`wrongparking-${index}`}
-          position={[incident.location.lat, incident.location.lng]}
-          icon={wrongParkingIcon}
-          eventHandlers={{
-            click: () => handleMarkerClick(incident),
-          }}
-        >
-          <Popup>
-            Wrong Parking Details:
-            <br />
-            Location: {incident.location.lat}, {incident.location.lng}
-            <br />
-            Timestamp: {incident.timestamp}
-          </Popup>
-        </Marker> ) : null
-      ))}
-       {incidentDetails && (
-        <IncidentDetailsModal
-          incident={incidentDetails}
-          onClose={() => setIncidentDetails(null)}
-        />
-      )}
-    </MapContainer>
-  );
-}
+//   return (
+//     <MapContainer
+//       center={mapCenter}
+//       zoom={mapZoom}
+//       style={{ height: 'calc(100vh - 4rem)', width: '100%' }}
+//     >
+//       <TileLayer
+//         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+//         attribution="© OpenStreetMap contributors"
+//       />
+//       {potholeIncidents?.map((incident, index) => (
+//         potholeIcon ? (
+//         <Marker
+//           key={`pothole-${index}`}
+//           position={[incident.location.lat, incident.location.lng]}
+//           icon={potholeIcon}
+//           eventHandlers={{
+//             click: () => handleMarkerClick(incident),
+//           }}
+//         >
+//           <Popup>
+//             Pothole Details:
+//             <br />
+//             Location: {incident.location.lat}, {incident.location.lng}
+//             <br />
+//             Timestamp: {incident.timestamp}
+//           </Popup>
+//         </Marker> ) : null
+//       ))}
+//       {wrongLaneDetections?.map((incident, index) => (
+//         wrongLaneIcon ? (
+//         <Marker
+//           key={`wronglane-${index}`}
+//           position={[incident.location.lat}, {incident.location.lng]}
+//           icon={wrongLaneIcon}
+//           eventHandlers={{
+//             click: () => handleMarkerClick(incident),
+//           }}
+//         >
+//           <Popup>
+//             Wrong Lane Details:
+//             <br />
+//             Location: {incident.location.lat}, {incident.location.lng}
+//             <br />
+//             Timestamp: {incident.timestamp}
+//           </Popup>
+//         </Marker> ) : null
+//       ))}
+//       {wrongParkingIncidents?.map((incident, index) => (
+//         wrongParkingIcon ? (
+//         <Marker
+//           key={`wrongparking-${index}`}
+//           position={[incident.location.lat}, {incident.location.lng]}
+//           icon={wrongParkingIcon}
+//           eventHandlers={{
+//             click: () => handleMarkerClick(incident),
+//           }}
+//         >
+//           <Popup>
+//             Wrong Parking Details:
+//             <br />
+//             Location: {incident.location.lat}, {incident.location.lng}
+//             <br />
+//             Timestamp: {incident.timestamp}
+//           </Popup>
+//         </Marker> ) : null
+//       ))}
+//        {incidentDetails && (
+//         <IncidentDetailsModal
+//           incident={incidentDetails}
+//           onClose={() => setIncidentDetails(null)}
+//         />
+//       )}
+//     </MapContainer>
+//   );
+// }
 
 const IncidentDetailsModal = ({ incident, onClose }) => {
   return (
