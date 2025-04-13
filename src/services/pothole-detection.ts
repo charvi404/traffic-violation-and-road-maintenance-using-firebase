@@ -30,8 +30,15 @@ export interface PotholeIncident {
   imageUrl?: string;
 }
 
+import { InferenceHTTPClient } from 'inference_sdk';
+
+const CLIENT = new InferenceHTTPClient({
+    api_url: "https://serverless.roboflow.com",
+    api_key: "8yaLfqGb62JC5OHaM3o8"
+});
+
 /**
- * Asynchronously retrieves pothole incidents within a date range.
+ * Asynchronously retrieves pothole incidents within a date range using Roboflow API.
  *
  * @param startDate The start date for filtering incidents.
  * @param endDate The end date for filtering incidents.
@@ -41,18 +48,17 @@ export async function getPotholeIncidents(
   startDate: string,
   endDate: string
 ): Promise<PotholeIncident[]> {
-  // TODO: Implement this by calling an API.
+    //TODO: Implement image upload, currently passing "your_image.jpg"
+    const result = await CLIENT.infer("your_image.jpg", "road-damage-det/2");
 
-  return [
-    {
-      location: { lat: 18.5204, lng: 73.8567 },
-      timestamp: '2024-07-22T10:00:00Z',
-      imageUrl: 'https://example.com/pothole1.jpg',
-    },
-    {
-      location: { lat: 18.5244, lng: 73.8467 },
-      timestamp: '2024-07-23T11:30:00Z',
-      imageUrl: 'https://example.com/pothole2.jpg',
-    },
-  ];
+    //Transform the result into PotholeIncident array
+    const incidents: PotholeIncident[] = result.predictions.map(pred => ({
+        location: {
+            lat: pred.top, //Example values, replace with actual latitude if available
+            lng: pred.left //Example values, replace with actual longitude if available
+        },
+        timestamp: new Date().toISOString(), //Current timestamp, replace with image timestamp if available
+        imageUrl: null //Image URL, implement retrieval if necessary
+    }));
+  return incidents;
 }
