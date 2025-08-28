@@ -1,6 +1,6 @@
-# 🛠️ Pune Smart Pothole Reporter
+# 🛠️ Smart Pothole Reporter
 
-A cloud-based web application that enables **citizens to report potholes with images and location**, while the backend uses AI and business logic to estimate **severity, size, repair material, and cost**, and then **notifies municipal authorities** for faster road maintenance in Pune city.
+A cloud-based web application that enables **citizens to report potholes with images and location**, while the backend uses AI and business logic to estimate **severity, size, repair material, and cost**, and then **notifies municipal authorities** for faster road maintenance in city.
 
 ---
 
