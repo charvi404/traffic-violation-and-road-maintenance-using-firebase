@@ -33,31 +33,22 @@ A cloud-based web application that enables **citizens to report potholes with im
 ## 🏗️ Tech Stack
 
 **Frontend**
-- React (Lovable-generated UI, editable with Tailwind/Material UI)
+- React 
 - Mapbox / Leaflet for interactive maps
 - Axios for API calls
 
 **Backend**
-- Node.js / Express REST API (or Flask/FastAPI)
-- Cloud Object Storage (AWS S3 / GCP Cloud Storage) for images
+- Node.js / Express REST API 
+- Cloud Object Storage (AWS S3 ) for images
 - PostgreSQL + PostGIS for geo-data storage
 - Business logic engine for cost/material calculation
 
 **AI/ML Pipeline**
 - YOLOv8 / U-Net for pothole detection
-- MiDaS (monocular depth estimation) for size/volume
 - Rule-based severity classifier
 - Dataset-driven cost estimator (unit prices of asphalt, sand, labor rates)
 
-**Cloud Infrastructure**
-- AWS / GCP (any cloud provider)
-- API Gateway + Cloud Run/Lambda
-- RDS/Cloud SQL for database
-- CI/CD via GitHub Actions
-- Monitoring (CloudWatch / Stackdriver)
 
----
 
-## 📂 Project Structure
 
 
